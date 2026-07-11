@@ -3,6 +3,7 @@ import inspect
 import os
 import sys
 from importlib.machinery import SourceFileLoader
+from importlib.util import (module_from_spec, spec_from_loader)
 
 
 IDENTIFIER = re.compile(r'[a-z_](\w)*$', re.IGNORECASE)
@@ -169,7 +170,12 @@ def conf_from_file(filepath):
     # This provides more verbose import-related error reporting than exec()
     absname, _ = os.path.splitext(abspath)
     basepath, module_name = absname.rsplit(os.sep, 1)
-    SourceFileLoader(module_name, abspath).load_module(module_name)
+
+    loader = SourceFileLoader(module_name, abspath)
+    spec = spec_from_loader(module_name, loader)
+    module = module_from_spec(spec)
+
+    spec.loader.exec_module(module)
 
     # If we were able to import as a module, actually exec the compiled code
     exec(compiled, globals(), conf_dict)
